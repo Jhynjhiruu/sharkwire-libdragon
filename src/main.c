@@ -96,23 +96,23 @@ static void set_gs_base(uint8_t base) {
 static bool init_modem(void) {
     uint32_t timeout_start;
 
-    // Set port direction to      IIII_IOII_OOIO_OIIO (I = input | O = output)
-    write_io_short(IO_SET_DIRS, 0b0000'0100'1101'1001);
+    // Set port direction to        IIII_IOII_OOIO_OIIO (I = input | O = output)
+    write_io_short(IO_SET_DIRS,   0b0000'0100'1101'1001);
 
     // Write 0b1100'1000 to output (likely to set serial IDLE state)
-    write_io_short(IO_WRITE_PINS, 0b1100'1000);
+    write_io_short(IO_WRITE_PINS, 0b0000'0000'1100'1000);
 
     // Write 0b0000'0100'1100'1001 to output
     //
     // Write 1 on TX and 0 on RTS to hold serial IDLE (TX high) and signal to
     // the modem that we're ready to send data (active low signal)
-    write_io_short(IO_WRITE_PINS, 0b0000'0100'1100'1001);
+    write_io_short(IO_WRITE_PINS, 0b0000'0100'1100'1000);
 
     // Delay for 200ms
     wait_ms(200);
 
     // Hold serial IDLE still
-    write_io_short(IO_WRITE_PINS, 0b1100'1000);
+    write_io_short(IO_WRITE_PINS, 0b0000'0000'1100'1000);
 
     // Read the modem status and return true if it's clear to send,
     // respecting the timeout
@@ -135,7 +135,7 @@ static size_t send_at_cmd(uint8_t * at_cmd, size_t length) {
     cmd_buf[9] = 0b1100'0000;
 
     // Set TX line IDLE
-    write_io_short(IO_WRITE_PINS, 0b1100'1000);
+    write_io_short(IO_WRITE_PINS, 0b0000'0000'1100'1000);
 
     // Loop through all of the bytes in the command
     for (bytes_sent = 0; bytes_sent < length; bytes_sent++) {
@@ -170,7 +170,7 @@ static size_t send_at_cmd(uint8_t * at_cmd, size_t length) {
     }
 
     // Go back to IDLE (TX high)
-    write_io_short(IO_WRITE_PINS, 0b1100'1000);
+    write_io_short(IO_WRITE_PINS, 0b0000'0000'1100'1000);
 
     return bytes_sent;
 }
