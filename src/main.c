@@ -1,5 +1,6 @@
 #include <libdragon.h>
 
+#include <inttypes.h>
 #include <stdint.h>
 
 // -------- Datel GAL interface --------
@@ -10,10 +11,12 @@
 // 0x0600: set pin directions? 1 = output, mapped to 'write pins'; 0 = input, mapped to 'read pins'
 // 0x0800: write pins
 
+// clang-format off
 #define IO_READ_PINS  (0x0000)
 #define IO_SET_BASE   (0x0400)
 #define IO_SET_DIRS   (0x0600)
 #define IO_WRITE_PINS (0x0800)
+// clang-format on
 
 static uint8_t GS_BASE = 0x10;
 
@@ -88,7 +91,7 @@ static void set_gs_base(uint8_t base) {
 #define MODEM_STATUS_CTS (0x20)
 
 // Timeout (in ms)
-#define TIMEOUT_MS (2000)
+#define TIMEOUT_MS (1000 * 5)
 
 // Serial bit period (for ~20000 baud: ~50μs)
 #define BIT_PERIOD_μS (1'000'000 / 20'000)
@@ -102,7 +105,7 @@ static bool init_modem(void) {
     // Write 0b1100'1000 to output (likely to set serial IDLE state)
     write_io_short(IO_WRITE_PINS, 0b0000'0000'1100'1000);
 
-    // Write 0b0000'0100'1100'1001 to output
+    // Write 0b0000'0100'1100'1000 to output
     //
     // Write 1 on TX and 0 on RTS to hold serial IDLE (TX high) and signal to
     // the modem that we're ready to send data (active low signal)
@@ -126,7 +129,7 @@ static bool init_modem(void) {
     return false;
 }
 
-static size_t send_at_cmd(uint8_t * at_cmd, size_t length) {
+static size_t send_at_cmd(uint8_t *at_cmd, size_t length) {
     uint8_t cmd_buf[10];
 
     size_t bytes_sent;
@@ -162,7 +165,7 @@ static size_t send_at_cmd(uint8_t * at_cmd, size_t length) {
             write_io_short(IO_WRITE_PINS, cmd_buf[i]);
 
             // ...read the pins?
-            //read_io(IO_READ_PINS);
+            // read_io(IO_READ_PINS);
 
             // Delay for one serial bit period (~50μs)
             wait_ticks(TICKS_FROM_US(BIT_PERIOD_μS));
@@ -185,9 +188,10 @@ int main(void) {
 
     bool is_modem_initialised = init_modem();
 
+    printf("Modem initialised: %s\n", is_modem_initialised ? "yes" : "no");
+    console_render();
+
     while (true) {
-        console_clear();
-        printf("Modem initialised: %s\n", is_modem_initialised ? "yes" : "no");
-        console_render();
+        ;
     }
 }
